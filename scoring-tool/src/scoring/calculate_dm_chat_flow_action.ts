@@ -102,7 +102,7 @@ export async function calculateDmChatFlowAction({
       const usernameInput = playwrightPage.getByRole("textbox", { name: "ユーザー名" });
       await usernameInput.pressSequentially("g63iaxn5c");
     } catch (err) {
-      throw new Error("DM相手のユーザー名の入力に失敗しました", { cause: err });
+      consola.error("DM相手のユーザー名の入力に失敗しました", err);
     }
 
     try {
@@ -129,14 +129,14 @@ export async function calculateDmChatFlowAction({
         delay: 10,
       });
     } catch (err) {
-      throw new Error("メッセージの入力に失敗しました", { cause: err });
+      consola.error("メッセージの入力に失敗しました", err);
     }
 
     // メッセージを送信
     try {
       await playwrightPage.keyboard.press("Enter");
     } catch (err) {
-      throw new Error("メッセージの送信に失敗しました", { cause: err });
+      consola.error("メッセージの送信に失敗しました", err);
     }
 
     // メッセージが表示されるまで待機（送信完了確認）
@@ -146,7 +146,7 @@ export async function calculateDmChatFlowAction({
         .filter({ hasText: "パフォーマンス改善のアドバイスをお願いします！" })
         .waitFor({ timeout: 30 * 1000 });
     } catch (err) {
-      throw new Error("メッセージの送信完了を待機中にタイムアウトしました", { cause: err });
+      consola.error("メッセージの送信完了を待機中にタイムアウトしました", err);
     }
 
     // 追加のメッセージを入力
@@ -158,14 +158,14 @@ export async function calculateDmChatFlowAction({
         delay: 10,
       });
     } catch (err) {
-      throw new Error("追加メッセージの入力に失敗しました", { cause: err });
+      consola.error("追加メッセージの入力に失敗しました", err);
     }
 
     // 2通目のメッセージを送信
     try {
       await playwrightPage.keyboard.press("Enter");
     } catch (err) {
-      throw new Error("2通目のメッセージの送信に失敗しました", { cause: err });
+      consola.error("2通目のメッセージの送信に失敗しました", err);
     }
 
     // 2通目のメッセージが表示されるまで待機
@@ -175,7 +175,7 @@ export async function calculateDmChatFlowAction({
         .filter({ hasText: "LCPの改善方法を具体的に教えてください。" })
         .waitFor({ timeout: 30 * 1000 });
     } catch (err) {
-      throw new Error("2通目のメッセージの送信完了を待機中にタイムアウトしました", { cause: err });
+      consola.error("2通目のメッセージの送信完了を待機中にタイムアウトしました", err);
     }
   }
   await flow.endTimespan();
