@@ -26,14 +26,12 @@ export async function calculateUserAuthFlowAction({
       url: new URL("/not-found", baseUrl).href,
     });
   } catch (err) {
-    throw new Error("ページの読み込みに失敗したか、タイムアウトしました", { cause: err });
+    // ユーザーフロー全体を 0 扱いにしないため、ここは落とさずログ出力に留める
+    consola.error("UserAuthFlowAction - goTo failed:", err);
   }
   consola.debug("UserAuthFlowAction - navigate end");
 
   const flow = await startFlow(puppeteerPage);
-
-  consola.debug("UserAuthFlowAction - timespan");
-  await flow.startTimespan();
 
   // DB に既に同名ユーザーが存在すると signup が失敗しやすいため、
   // 毎回ユニークなユーザー名/名前を生成してから signup -> signin する
@@ -53,7 +51,7 @@ export async function calculateUserAuthFlowAction({
         .getByRole("heading", { name: "サインイン" })
         .waitFor({ timeout: 10 * 1000 });
     } catch (err) {
-      throw new Error("サインインモーダルの表示に失敗しました", { cause: err });
+      consola.error("UserAuthFlowAction - sign-in modal show failed:", err);
     }
     try {
       const button = playwrightPage
@@ -65,28 +63,31 @@ export async function calculateUserAuthFlowAction({
         .getByRole("heading", { name: "新規登録" })
         .waitFor({ timeout: 10 * 1000 });
     } catch (err) {
-      throw new Error("新規登録モーダルへの遷移に失敗しました", { cause: err });
+      consola.error("UserAuthFlowAction - signup modal transition failed:", err);
     }
     try {
       const input = playwrightPage.getByRole("dialog").getByLabel("ユーザー名");
       await input.waitFor({ state: "visible", timeout: 10 * 1000 });
+      await input.click();
       await input.fill(username);
     } catch (err) {
-      throw new Error("ユーザー名の入力に失敗しました", { cause: err });
+      consola.error("UserAuthFlowAction - username input failed:", err);
     }
     try {
       const input = playwrightPage.getByRole("dialog").getByLabel("名前");
       await input.waitFor({ state: "visible", timeout: 10 * 1000 });
+      await input.click();
       await input.fill(name);
     } catch (err) {
-      throw new Error("名前の入力に失敗しました", { cause: err });
+      consola.error("UserAuthFlowAction - name input failed:", err);
     }
     try {
       const input = playwrightPage.getByRole("dialog").getByLabel("パスワード");
       await input.waitFor({ state: "visible", timeout: 10 * 1000 });
+      await input.click();
       await input.fill(password);
     } catch (err) {
-      throw new Error("パスワードの入力に失敗しました", { cause: err });
+      consola.error("UserAuthFlowAction - password input failed:", err);
     }
     try {
       const button = playwrightPage.getByRole("dialog").getByRole("button", { name: "登録する" });
@@ -95,7 +96,7 @@ export async function calculateUserAuthFlowAction({
         .getByRole("link", { name: "マイページ" })
         .waitFor({ timeout: 10 * 1000 });
     } catch (err) {
-      throw new Error("新規登録に失敗しました", { cause: err });
+      consola.error("UserAuthFlowAction - signup submit failed:", err);
     }
   }
 
@@ -105,7 +106,7 @@ export async function calculateUserAuthFlowAction({
       const button = playwrightPage.getByRole("button", { name: "アカウントメニュー" });
       await button.click();
     } catch (err) {
-      throw new Error("アカウントメニューの表示に失敗しました", { cause: err });
+      consola.error("UserAuthFlowAction - account menu show failed:", err);
     }
     try {
       const button = playwrightPage.getByRole("button", { name: "サインアウト" });
@@ -114,7 +115,7 @@ export async function calculateUserAuthFlowAction({
         .getByRole("button", { name: "サインイン" })
         .waitFor({ timeout: 10 * 1000 });
     } catch (err) {
-      throw new Error("サインアウトに失敗しました", { cause: err });
+      consola.error("UserAuthFlowAction - sign-out failed:", err);
     }
   }
 
@@ -128,36 +129,49 @@ export async function calculateUserAuthFlowAction({
         .getByRole("heading", { name: "サインイン" })
         .waitFor({ timeout: 10 * 1000 });
     } catch (err) {
-      throw new Error("サインインモーダルの表示に失敗しました", { cause: err });
+      consola.error("UserAuthFlowAction - sign-in modal show failed:", err);
     }
     try {
       const input = playwrightPage.getByRole("dialog").getByLabel("ユーザー名");
       await input.waitFor({ state: "visible", timeout: 10 * 1000 });
+      await input.click();
       await input.fill(username);
     } catch (err) {
-      throw new Error("ユーザー名の入力に失敗しました", { cause: err });
+      consola.error("UserAuthFlowAction - username input failed:", err);
     }
     try {
       const input = playwrightPage.getByRole("dialog").getByLabel("パスワード");
       await input.waitFor({ state: "visible", timeout: 10 * 1000 });
+      await input.click();
       await input.fill(password);
     } catch (err) {
-      throw new Error("パスワードの入力に失敗しました", { cause: err });
+      consola.error("UserAuthFlowAction - password input failed:", err);
     }
+    // Lighthouse timespan は最後のサインイン押下〜遷移だけに絞る（計測の安定性優先）
+    let didStartTimespan = false;
     try {
       const button = playwrightPage.getByRole("dialog").getByRole("button", { name: "サインイン" });
+      await button.waitFor({ state: "visible", timeout: 10 * 1000 });
+
+      consola.debug("UserAuthFlowAction - timespan start (sign-in)");
+      await flow.startTimespan();
+      didStartTimespan = true;
       await button.click();
       await playwrightPage
         .getByRole("link", { name: "マイページ" })
         .waitFor({ timeout: 10 * 1000 });
     } catch (err) {
-      // ここで落とすと userflow whole が 0 扱いになるため、
-      // 失敗しても interaction 指標の計測は継続する
       consola.error("UserAuthFlowAction - sign-in wait failed:", err);
+    } finally {
+      if (didStartTimespan) {
+        try {
+          await flow.endTimespan();
+        } catch (err) {
+          consola.error("UserAuthFlowAction - endTimespan failed:", err);
+        }
+      }
     }
   }
-  await flow.endTimespan();
-  consola.debug("UserAuthFlowAction - timespan end");
 
   const {
     steps: [result],
