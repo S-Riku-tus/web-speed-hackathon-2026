@@ -98,108 +98,130 @@ export async function calculateDmChatFlowAction({
   }
   consola.debug("DmChatFlowAction - navigate to DM end");
 
-  const flow = await startFlow(puppeteerPage);
+  const flow = await startFlow(puppeteerPage).catch((err) => {
+    consola.error("DmChatFlowAction - startFlow failed:", err);
+    return null;
+  });
+  if (flow == null) {
+    const { breakdown, scoreX100 } = calculateHackathonScore({} as any, { isUserflow: true });
+    return {
+      audits: {} as any,
+      breakdown,
+      scoreX100,
+    };
+  }
 
   consola.debug("DmChatFlowAction - timespan");
-  await flow.startTimespan();
-  {
-    // 「新しくDMを始める」ボタンをクリック
-    try {
-      const newDmButton = playwrightPage.getByRole("button", { name: "新しくDMを始める" });
-      await newDmButton.click();
-      await playwrightPage
-        .getByRole("heading", { name: "新しくDMを始める" })
-        .waitFor({ timeout: 10 * 1000 });
-    } catch (err) {
-      consola.error("DmChatFlowAction - new DM modal show failed:", err);
-    }
+  let didStartTimespan = false;
+  try {
+    await flow.startTimespan();
+    didStartTimespan = true;
+    {
+      // 「新しくDMを始める」ボタンをクリック
+      try {
+        const newDmButton = playwrightPage.getByRole("button", { name: "新しくDMを始める" });
+        await newDmButton.click();
+        await playwrightPage
+          .getByRole("heading", { name: "新しくDMを始める" })
+          .waitFor({ timeout: 10 * 1000 });
+      } catch (err) {
+        consola.error("DmChatFlowAction - new DM modal show failed:", err);
+      }
 
-    // 既存ユーザーを入力してDM開始
-    try {
-      const usernameInput = playwrightPage.getByRole("textbox", { name: "ユーザー名" });
-      await usernameInput.waitFor({ state: "visible", timeout: 10 * 1000 });
-      await usernameInput.click();
-      await usernameInput.fill(peerUsername);
-    } catch (err) {
-      consola.error("DM相手のユーザー名の入力に失敗しました", err);
-    }
+      // 既存ユーザーを入力してDM開始
+      try {
+        const usernameInput = playwrightPage.getByRole("textbox", { name: "ユーザー名" });
+        await usernameInput.waitFor({ state: "visible", timeout: 10 * 1000 });
+        await usernameInput.click();
+        await usernameInput.fill(peerUsername);
+      } catch (err) {
+        consola.error("DM相手のユーザー名の入力に失敗しました", err);
+      }
 
-    try {
-      const startDmButton = playwrightPage.getByRole("button", { name: "DMを開始" });
-      await startDmButton.click();
-      // DMスレッドページへ遷移
-      await playwrightPage.waitForURL("**/dm/*", {
-        timeout: 10 * 1000,
-      });
-    } catch (err) {
-      consola.error("DmChatFlowAction - navigate to DM thread failed:", err);
-    }
+      try {
+        const startDmButton = playwrightPage.getByRole("button", { name: "DMを開始" });
+        await startDmButton.click();
+        // DMスレッドページへ遷移
+        await playwrightPage.waitForURL("**/dm/*", {
+          timeout: 10 * 1000,
+        });
+      } catch (err) {
+        consola.error("DmChatFlowAction - navigate to DM thread failed:", err);
+      }
 
-    // メッセージを入力（複数行）
-    try {
-      const messageInput = playwrightPage.getByRole("textbox", { name: "内容" });
-      await messageInput.waitFor({ state: "visible", timeout: 10 * 1000 });
-      await messageInput.click();
-      await messageInput.pressSequentially("こんにちは！", { delay: 10 });
-      await playwrightPage.keyboard.press("Shift+Enter");
-      await messageInput.pressSequentially("Web Speed Hackathon 2026に参加しています。", {
-        delay: 10,
-      });
-      await playwrightPage.keyboard.press("Shift+Enter");
-      await messageInput.pressSequentially("パフォーマンス改善のアドバイスをお願いします！", {
-        delay: 10,
-      });
-    } catch (err) {
-      consola.error("メッセージの入力に失敗しました", err);
-    }
+      // メッセージを入力（複数行）
+      try {
+        const messageInput = playwrightPage.getByRole("textbox", { name: "内容" });
+        await messageInput.waitFor({ state: "visible", timeout: 10 * 1000 });
+        await messageInput.click();
+        await messageInput.pressSequentially("こんにちは！", { delay: 10 });
+        await playwrightPage.keyboard.press("Shift+Enter");
+        await messageInput.pressSequentially("Web Speed Hackathon 2026に参加しています。", {
+          delay: 10,
+        });
+        await playwrightPage.keyboard.press("Shift+Enter");
+        await messageInput.pressSequentially("パフォーマンス改善のアドバイスをお願いします！", {
+          delay: 10,
+        });
+      } catch (err) {
+        consola.error("メッセージの入力に失敗しました", err);
+      }
 
-    // メッセージを送信
-    try {
-      await playwrightPage.keyboard.press("Enter");
-    } catch (err) {
-      consola.error("メッセージの送信に失敗しました", err);
-    }
+      // メッセージを送信
+      try {
+        await playwrightPage.keyboard.press("Enter");
+      } catch (err) {
+        consola.error("メッセージの送信に失敗しました", err);
+      }
 
-    // メッセージが表示されるまで待機（送信完了確認）
-    try {
-      await playwrightPage
-        .locator("li")
-        .filter({ hasText: "パフォーマンス改善のアドバイスをお願いします！" })
-        .waitFor({ timeout: 30 * 1000 });
-    } catch (err) {
-      consola.error("メッセージの送信完了を待機中にタイムアウトしました", err);
-    }
+      // メッセージが表示されるまで待機（送信完了確認）
+      try {
+        await playwrightPage
+          .locator("li")
+          .filter({ hasText: "パフォーマンス改善のアドバイスをお願いします！" })
+          .waitFor({ timeout: 30 * 1000 });
+      } catch (err) {
+        consola.error("メッセージの送信完了を待機中にタイムアウトしました", err);
+      }
 
-    // 追加のメッセージを入力
-    try {
-      const messageInput = playwrightPage.getByRole("textbox", { name: "内容" });
-      await messageInput.pressSequentially("追加の質問です。", { delay: 10 });
-      await playwrightPage.keyboard.press("Shift+Enter");
-      await messageInput.pressSequentially("LCPの改善方法を具体的に教えてください。", {
-        delay: 10,
-      });
-    } catch (err) {
-      consola.error("追加メッセージの入力に失敗しました", err);
-    }
+      // 追加のメッセージを入力
+      try {
+        const messageInput = playwrightPage.getByRole("textbox", { name: "内容" });
+        await messageInput.pressSequentially("追加の質問です。", { delay: 10 });
+        await playwrightPage.keyboard.press("Shift+Enter");
+        await messageInput.pressSequentially("LCPの改善方法を具体的に教えてください。", {
+          delay: 10,
+        });
+      } catch (err) {
+        consola.error("追加メッセージの入力に失敗しました", err);
+      }
 
-    // 2通目のメッセージを送信
-    try {
-      await playwrightPage.keyboard.press("Enter");
-    } catch (err) {
-      consola.error("2通目のメッセージの送信に失敗しました", err);
-    }
+      // 2通目のメッセージを送信
+      try {
+        await playwrightPage.keyboard.press("Enter");
+      } catch (err) {
+        consola.error("2通目のメッセージの送信に失敗しました", err);
+      }
 
-    // 2通目のメッセージが表示されるまで待機
-    try {
-      await playwrightPage
-        .locator("li")
-        .filter({ hasText: "LCPの改善方法を具体的に教えてください。" })
-        .waitFor({ timeout: 30 * 1000 });
-    } catch (err) {
-      consola.error("2通目のメッセージの送信完了を待機中にタイムアウトしました", err);
+      // 2通目のメッセージが表示されるまで待機
+      try {
+        await playwrightPage
+          .locator("li")
+          .filter({ hasText: "LCPの改善方法を具体的に教えてください。" })
+          .waitFor({ timeout: 30 * 1000 });
+      } catch (err) {
+        consola.error("2通目のメッセージの送信完了を待機中にタイムアウトしました", err);
+      }
+    }
+  } finally {
+    if (didStartTimespan) {
+      try {
+        await flow.endTimespan();
+      } catch (err) {
+        consola.error("DmChatFlowAction - endTimespan failed:", err);
+      }
     }
   }
-  await flow.endTimespan();
   consola.debug("DmChatFlowAction - timespan end");
 
   try {

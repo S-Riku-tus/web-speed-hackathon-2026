@@ -31,7 +31,18 @@ export async function calculateUserAuthFlowAction({
   }
   consola.debug("UserAuthFlowAction - navigate end");
 
-  const flow = await startFlow(puppeteerPage);
+  const flow = await startFlow(puppeteerPage).catch((err) => {
+    consola.error("UserAuthFlowAction - startFlow failed:", err);
+    return null;
+  });
+  if (flow == null) {
+    const { breakdown, scoreX100 } = calculateHackathonScore({} as any, { isUserflow: true });
+    return {
+      audits: {} as any,
+      breakdown,
+      scoreX100,
+    };
+  }
 
   // DB に既に同名ユーザーが存在すると signup が失敗しやすいため、
   // 毎回ユニークなユーザー名/名前を生成してから signup -> signin する
