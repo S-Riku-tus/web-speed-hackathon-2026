@@ -110,17 +110,27 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
   await flow.endTimespan();
   consola.debug("PostFlowAction - timespan end");
 
-  const {
-    steps: [result],
-  } = await flow.createFlowResult();
+  try {
+    const {
+      steps: [result],
+    } = await flow.createFlowResult();
 
-  const { breakdown, scoreX100 } = calculateHackathonScore(result!.lhr.audits, {
-    isUserflow: true,
-  });
+    const { breakdown, scoreX100 } = calculateHackathonScore(result!.lhr.audits, {
+      isUserflow: true,
+    });
 
-  return {
-    audits: result!.lhr.audits,
-    breakdown,
-    scoreX100,
-  };
+    return {
+      audits: result!.lhr.audits,
+      breakdown,
+      scoreX100,
+    };
+  } catch (err) {
+    consola.error("PostFlowAction - createFlowResult failed:", err);
+    const { breakdown, scoreX100 } = calculateHackathonScore({} as any, { isUserflow: true });
+    return {
+      audits: {} as any,
+      breakdown,
+      scoreX100,
+    };
+  }
 }
