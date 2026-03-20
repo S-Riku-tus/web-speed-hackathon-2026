@@ -5,6 +5,7 @@ import { Route, Routes, useLocation, useNavigate } from "react-router";
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
 import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
 import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer";
+import { TimelineContainer } from "@web-speed-hackathon-2026/client/src/containers/TimelineContainer";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 const CrokContainer = lazy(() =>
@@ -20,12 +21,6 @@ const NotFoundContainer = lazy(() =>
 const UserProfileContainer = lazy(() =>
   import("@web-speed-hackathon-2026/client/src/containers/UserProfileContainer").then((m) => ({
     default: m.UserProfileContainer,
-  })),
-);
-
-const TimelineContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/TimelineContainer").then((m) => ({
-    default: m.TimelineContainer,
   })),
 );
 
@@ -64,9 +59,7 @@ const TermContainer = lazy(() =>
 if (typeof window !== "undefined") {
   const path = window.location.pathname;
 
-  if (path === "/") {
-    void import("@web-speed-hackathon-2026/client/src/containers/TimelineContainer");
-  } else if (path === "/search") {
+  if (path === "/search") {
     void import("@web-speed-hackathon-2026/client/src/containers/SearchContainer");
   } else if (path === "/terms") {
     void import("@web-speed-hackathon-2026/client/src/containers/TermContainer");

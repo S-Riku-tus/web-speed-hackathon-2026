@@ -48,8 +48,22 @@ async function buildPreloadData(req: Parameters<Parameters<typeof Router>[0]>[0]
   const urlPath = req.path;
   try {
     if (urlPath === "/" || urlPath === "") {
-      // ホーム: タイムライン最初の 30 件
-      const posts = await Post.findAll({ limit: 30 });
+      // ホーム: LCP/TBT のため、初期に必要な情報だけに絞る
+      // （images/movie/sound を含めると preload JSON が巨大になり main.js の Script Evaluation が長くなりやすい）
+      const posts = await Post.unscoped().findAll({
+        limit: 30,
+        attributes: ["id", "text", "createdAt"],
+        order: [["id", "DESC"]],
+        include: [
+          {
+            association: "user",
+            attributes: { exclude: ["profileImageId"] },
+            include: [{ association: "profileImage", attributes: ["id", "alt"] }],
+            required: true,
+          },
+        ],
+      });
+
       data["/api/v1/posts"] = posts.map((p) => p.toJSON());
     } else if (urlPath === "/search") {
       // 検索: 初期クエリに対する最初の 30 件
