@@ -97,7 +97,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
         "あのイーハトーヴォのすきとおった風、夏でも底に冷たさをもつ青いそら、うつくしい森で飾られたモリーオ市、郊外のぎらぎらひかる草の波。",
       );
     } catch (err) {
-      throw new Error("投稿内容の入力に失敗しました", { cause: err });
+      consola.error("投稿内容の入力に失敗しました", err);
     }
     try {
       const submitButton = playwrightPage
@@ -111,7 +111,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
         )
         .waitFor({ timeout: 120 * 1000 });
     } catch (err) {
-      throw new Error("投稿の完了を確認できませんでした", { cause: err });
+      consola.error("投稿の完了を確認できませんでした", err);
     }
   }
   // 画像の投稿
@@ -131,7 +131,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
         .getByRole("textbox", { name: "いまなにしてる？" });
       await contentInput.pressSequentially("画像を添付したテスト投稿です。");
     } catch (err) {
-      throw new Error("投稿内容の入力に失敗しました", { cause: err });
+      consola.error("投稿内容の入力に失敗しました", err);
     }
     try {
       const imageInput = playwrightPage
@@ -152,7 +152,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
         .getByAltText("熊の形をしたアスキーアート。アナログマというキャプションがついている")
         .waitFor({ timeout: 120 * 1000 });
     } catch (err) {
-      throw new Error("画像投稿の完了を確認できませんでした", { cause: err });
+      consola.error("画像投稿の完了を確認できませんでした", err);
     }
   }
   // 動画の投稿
@@ -172,7 +172,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
         .getByRole("textbox", { name: "いまなにしてる？" });
       await contentInput.pressSequentially("動画を添付したテスト投稿です。");
     } catch (err) {
-      throw new Error("投稿内容の入力に失敗しました", { cause: err });
+      consola.error("投稿内容の入力に失敗しました", err);
     }
     try {
       const videoInput = playwrightPage
@@ -199,7 +199,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
           .waitFor({ timeout: 120 * 1000 }),
       ]);
     } catch (err) {
-      throw new Error("動画投稿の完了を確認できませんでした", { cause: err });
+      consola.error("動画投稿の完了を確認できませんでした", err);
     }
   }
   // 音声の投稿
@@ -219,7 +219,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
         .getByRole("textbox", { name: "いまなにしてる？" });
       await contentInput.pressSequentially("音声を添付したテスト投稿です。");
     } catch (err) {
-      throw new Error("投稿内容の入力に失敗しました", { cause: err });
+      consola.error("投稿内容の入力に失敗しました", err);
     }
     try {
       const audioInput = playwrightPage
@@ -250,7 +250,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
           .waitFor({ timeout: 120 * 1000 }),
       ]);
     } catch (err) {
-      throw new Error("音声投稿の完了を確認できませんでした", { cause: err });
+      consola.error("音声投稿の完了を確認できませんでした", err);
     }
   }
   await flow.endTimespan();

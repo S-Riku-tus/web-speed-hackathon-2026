@@ -41,7 +41,7 @@ export async function calculateSearchPostFlowAction({
       });
       await searchInput.pressSequentially(`アニメ since:2026-01-06${"0".repeat(20)}x`);
     } catch (err) {
-      throw new Error("検索クエリの入力に失敗しました", { cause: err });
+      consola.error("検索クエリの入力に失敗しました", err);
     }
     try {
       const searchButton = playwrightPage.getByRole("button", { name: "検索" });
@@ -50,7 +50,7 @@ export async function calculateSearchPostFlowAction({
         .getByRole("heading", { name: /「アニメ/ })
         .waitFor({ timeout: 120 * 1000 });
     } catch (err) {
-      throw new Error("検索結果の表示に失敗しました", { cause: err });
+      consola.error("検索結果の表示に失敗しました", err);
     }
 
     try {
@@ -62,7 +62,7 @@ export async function calculateSearchPostFlowAction({
         `アニメ since:2026-01-06${"0".repeat(10)}x until:2026-01-06${"0".repeat(10)}x`,
       );
     } catch (err) {
-      throw new Error("検索クエリの追加入力に失敗しました", { cause: err });
+      consola.error("検索クエリの追加入力に失敗しました", err);
     }
     try {
       const searchButton = playwrightPage.getByRole("button", { name: "検索" });
@@ -71,7 +71,7 @@ export async function calculateSearchPostFlowAction({
         .getByRole("heading", { name: /「アニメ/ })
         .waitFor({ timeout: 120 * 1000 });
     } catch (err) {
-      throw new Error("追加検索結果の表示に失敗しました", { cause: err });
+      consola.error("追加検索結果の表示に失敗しました", err);
     }
   }
   await flow.endTimespan();

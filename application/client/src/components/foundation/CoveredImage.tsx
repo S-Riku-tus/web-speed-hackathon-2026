@@ -65,6 +65,9 @@ export const CoveredImage = ({ src }: Props) => {
           },
         )}
         src={blobUrl}
+        loading="lazy"
+        decoding="async"
+        fetchPriority="low"
       />
 
       <button

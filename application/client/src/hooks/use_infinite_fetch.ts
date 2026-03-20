@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const LIMIT = 30;
 
@@ -13,13 +13,23 @@ export function useInfiniteFetch<T>(
   apiPath: string,
   fetcher: (apiPath: string) => Promise<T[]>,
 ): ReturnValues<T> {
-  const internalRef = useRef({ isLoading: false, offset: 0 });
+  const preloaded = useMemo(() => {
+    if (typeof window === "undefined") return { found: false as const, value: [] as T[] };
+    const preload = (window as unknown as { __PRELOAD_DATA__?: Record<string, unknown> }).__PRELOAD_DATA__;
+    if (!preload) return { found: false as const, value: [] as T[] };
+    if (!(apiPath in preload)) return { found: false as const, value: [] as T[] };
+    const value = preload[apiPath];
+    if (!Array.isArray(value)) return { found: false as const, value: [] as T[] };
+    return { found: true as const, value: value as T[] };
+  }, [apiPath]);
 
-  const [result, setResult] = useState<Omit<ReturnValues<T>, "fetchMore">>({
-    data: [],
+  const internalRef = useRef({ isLoading: false, offset: preloaded.found ? preloaded.value.length : 0 });
+
+  const [result, setResult] = useState<Omit<ReturnValues<T>, "fetchMore">>(() => ({
+    data: preloaded.found ? preloaded.value : [],
     error: null,
-    isLoading: true,
-  });
+    isLoading: !preloaded.found,
+  }));
 
   const fetchMore = useCallback(() => {
     const { isLoading, offset } = internalRef.current;
@@ -63,6 +73,21 @@ export function useInfiniteFetch<T>(
   }, [apiPath, fetcher]);
 
   useEffect(() => {
+    if (preloaded.found) {
+      // プリロード値を使い切ったので、以後の fetchMore はネットワーク取得に切り替える
+      if (typeof window !== "undefined") {
+        const preload = (window as unknown as { __PRELOAD_DATA__?: Record<string, unknown> }).__PRELOAD_DATA__;
+        if (preload && apiPath in preload) delete preload[apiPath];
+      }
+      internalRef.current = { isLoading: false, offset: preloaded.value.length };
+      setResult(() => ({
+        data: preloaded.value,
+        error: null,
+        isLoading: false,
+      }));
+      return;
+    }
+
     setResult(() => ({
       data: [],
       error: null,
@@ -74,7 +99,7 @@ export function useInfiniteFetch<T>(
     };
 
     fetchMore();
-  }, [fetchMore]);
+  }, [fetchMore, apiPath, preloaded.found, preloaded.value.length]);
 
   return {
     ...result,
