@@ -13,15 +13,17 @@ export function useInfiniteFetch<T>(
   apiPath: string,
   fetcher: (apiPath: string) => Promise<T[]>,
 ): ReturnValues<T> {
+  const isEnabled = apiPath.trim() !== "";
   const preloaded = useMemo(() => {
     if (typeof window === "undefined") return { found: false as const, value: [] as T[] };
+    if (!isEnabled) return { found: false as const, value: [] as T[] };
     const preload = (window as unknown as { __PRELOAD_DATA__?: Record<string, unknown> }).__PRELOAD_DATA__;
     if (!preload) return { found: false as const, value: [] as T[] };
     if (!(apiPath in preload)) return { found: false as const, value: [] as T[] };
     const value = preload[apiPath];
     if (!Array.isArray(value)) return { found: false as const, value: [] as T[] };
     return { found: true as const, value: value as T[] };
-  }, [apiPath]);
+  }, [apiPath, isEnabled]);
 
   const internalRef = useRef({ isLoading: false, offset: preloaded.found ? preloaded.value.length : 0 });
 
@@ -32,6 +34,9 @@ export function useInfiniteFetch<T>(
   }));
 
   const fetchMore = useCallback(() => {
+    if (!isEnabled) {
+      return;
+    }
     const { isLoading, offset } = internalRef.current;
     if (isLoading) {
       return;
@@ -70,9 +75,18 @@ export function useInfiniteFetch<T>(
         };
       },
     );
-  }, [apiPath, fetcher]);
+  }, [apiPath, fetcher, isEnabled]);
 
   useEffect(() => {
+    if (!isEnabled) {
+      internalRef.current = { isLoading: false, offset: 0 };
+      setResult(() => ({
+        data: [],
+        error: null,
+        isLoading: false,
+      }));
+      return;
+    }
     if (preloaded.found) {
       // プリロード値を使い切ったので、以後の fetchMore はネットワーク取得に切り替える
       if (typeof window !== "undefined") {

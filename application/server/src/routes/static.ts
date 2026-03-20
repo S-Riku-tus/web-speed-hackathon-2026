@@ -5,7 +5,7 @@ import { Router } from "express";
 import serveStatic from "serve-static";
 import { col, Op, where } from "sequelize";
 
-import { Comment, DirectMessageConversation, Post, User } from "@web-speed-hackathon-2026/server/src/models";
+import { DirectMessageConversation, Post, User } from "@web-speed-hackathon-2026/server/src/models";
 import {
   CLIENT_DIST_PATH,
   PUBLIC_PATH,
@@ -138,12 +138,8 @@ async function buildPreloadData(req: Parameters<Parameters<typeof Router>[0]>[0]
       if (postMatch) {
         // 投稿詳細ページ
         const postId = postMatch[1];
-        const [post, comments] = await Promise.all([
-          Post.findByPk(postId),
-          Comment.findAll({ where: { postId }, limit: 30 }),
-        ]);
+        const post = await Post.findByPk(postId);
         data[`/api/v1/posts/${postId}`] = post ? post.toJSON() : null;
-        data[`/api/v1/posts/${postId}/comments`] = comments.map((c) => c.toJSON());
       }
     }
 
@@ -165,16 +161,44 @@ async function buildPreloadData(req: Parameters<Parameters<typeof Router>[0]>[0]
           const messages = json.messages?.reverse() ?? [];
 
           // LCP に影響する lastMessage と、unread 判定に必要な最小限を残す
-          const trimmed = messages.slice(Math.max(0, messages.length - 8)).map((m) => {
-            if (m?.sender?.profileImage != null) {
-              // UI側で sender.profileImage は不要なので削って JSON サイズを圧縮
-              delete m.sender.profileImage;
+          const trimmed = messages.slice(Math.max(0, messages.length - 6)).map((m) => {
+            if (m?.sender != null && typeof m.sender === "object") {
+              // UI側で sender は message.sender.id だけ使う
+              if ((m.sender as any).profileImage != null) {
+                delete (m.sender as any).profileImage;
+              }
+              for (const k of Object.keys(m.sender)) {
+                if (k !== "id") delete (m.sender as any)[k];
+              }
             }
             return m;
           });
 
           return {
             ...json,
+            // peer 表示に不要なフィールドを削る
+            initiator:
+              json.initiator != null && typeof json.initiator === "object"
+                ? (() => {
+                    for (const k of Object.keys(json.initiator as any)) {
+                      if (!["id", "username", "name", "profileImage"].includes(k)) {
+                        delete (json.initiator as any)[k];
+                      }
+                    }
+                    return json.initiator;
+                  })()
+                : json.initiator,
+            member:
+              json.member != null && typeof json.member === "object"
+                ? (() => {
+                    for (const k of Object.keys(json.member as any)) {
+                      if (!["id", "username", "name", "profileImage"].includes(k)) {
+                        delete (json.member as any)[k];
+                      }
+                    }
+                    return json.member;
+                  })()
+                : json.member,
             messages: trimmed,
           };
         });
@@ -192,9 +216,14 @@ async function buildPreloadData(req: Parameters<Parameters<typeof Router>[0]>[0]
             const json = conversation.toJSON() as Record<string, unknown> & { messages?: any[] };
             const messages = json.messages ?? [];
             // 本文として上側に来るメッセージがLCP候補になりやすいので、前後を少しだけ残す
-            const trimmed = messages.slice(0, Math.min(messages.length, 30)).map((m) => {
-              if (m?.sender?.profileImage != null) {
-                delete m.sender.profileImage;
+            const trimmed = messages.slice(0, Math.min(messages.length, 12)).map((m) => {
+              if (m?.sender != null && typeof m.sender === "object") {
+                if ((m.sender as any).profileImage != null) {
+                  delete (m.sender as any).profileImage;
+                }
+                for (const k of Object.keys(m.sender)) {
+                  if (k !== "id") delete (m.sender as any)[k];
+                }
               }
               return m;
             });

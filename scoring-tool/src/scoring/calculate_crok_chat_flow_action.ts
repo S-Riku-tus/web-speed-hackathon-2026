@@ -80,7 +80,18 @@ export async function calculateCrokChatFlowAction({
   }
   consola.debug("CrokChatFlowAction - navigate to Crok end");
 
-  const flow = await startFlow(puppeteerPage);
+  const flow = await startFlow(puppeteerPage).catch((err) => {
+    consola.error("CrokChatFlowAction - startFlow failed:", err);
+    return null;
+  });
+  if (flow == null) {
+    const { breakdown, scoreX100 } = calculateHackathonScore({} as any, { isUserflow: true });
+    return {
+      audits: {} as any,
+      breakdown,
+      scoreX100,
+    };
+  }
 
   // まず入力（timespan 外）
   try {
@@ -93,27 +104,33 @@ export async function calculateCrokChatFlowAction({
 
   // timespan は “送信クリック〜応答表示待ち” に限定して INP/TBT を拾いやすくする
   consola.debug("CrokChatFlowAction - timespan");
-  await flow.startTimespan();
+  let didStartTimespan = false;
   try {
-    const sendButton = playwrightPage.getByRole("button", { name: "送信" });
-    await sendButton.click();
-
+    await flow.startTimespan();
+    didStartTimespan = true;
     try {
-      await playwrightPage.getByRole("status", { name: "応答中" }).waitFor({ timeout: 60 * 1000 });
-    } catch {
-      // 応答中ステータスが取れない場合でも、見えていれば十分
-    }
+      const sendButton = playwrightPage.getByRole("button", { name: "送信" });
+      await sendButton.click();
 
-    await playwrightPage
-      .getByRole("heading", { name: "第六章：最終疾走と到達" })
-      .waitFor({ timeout: 90 * 1000 });
-  } catch (err) {
-    consola.error("CrokChatFlowAction - send/response wait failed:", err);
-  } finally {
-    try {
-      await flow.endTimespan();
+      try {
+        await playwrightPage.getByRole("status", { name: "応答中" }).waitFor({ timeout: 60 * 1000 });
+      } catch {
+        // 応答中ステータスが取れない場合でも、見えていれば十分
+      }
+
+      await playwrightPage
+        .getByRole("heading", { name: "第六章：最終疾走と到達" })
+        .waitFor({ timeout: 90 * 1000 });
     } catch (err) {
-      consola.error("CrokChatFlowAction - endTimespan failed:", err);
+      consola.error("CrokChatFlowAction - send/response wait failed:", err);
+    }
+  } finally {
+    if (didStartTimespan) {
+      try {
+        await flow.endTimespan();
+      } catch (err) {
+        consola.error("CrokChatFlowAction - endTimespan failed:", err);
+      }
     }
   }
   consola.debug("CrokChatFlowAction - timespan end");
