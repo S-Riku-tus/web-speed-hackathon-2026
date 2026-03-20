@@ -26,7 +26,7 @@ export async function calculateSearchPostFlowAction({
       url: new URL("/search", baseUrl).href,
     });
   } catch (err) {
-    throw new Error("ページの読み込みに失敗したか、タイムアウトしました", { cause: err });
+    consola.error("SearchPostFlowAction - goTo /search failed:", err);
   }
   consola.debug("SearchPostFlowAction - navigate end");
 

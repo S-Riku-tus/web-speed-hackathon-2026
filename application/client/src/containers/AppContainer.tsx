@@ -12,39 +12,9 @@ const CrokContainer = lazy(() =>
     default: m.CrokContainer,
   })),
 );
-const DirectMessageContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer").then((m) => ({
-    default: m.DirectMessageContainer,
-  })),
-);
-const DirectMessageListContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/DirectMessageListContainer").then((m) => ({
-    default: m.DirectMessageListContainer,
-  })),
-);
 const NotFoundContainer = lazy(() =>
   import("@web-speed-hackathon-2026/client/src/containers/NotFoundContainer").then((m) => ({
     default: m.NotFoundContainer,
-  })),
-);
-const PostContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/PostContainer").then((m) => ({
-    default: m.PostContainer,
-  })),
-);
-const SearchContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/SearchContainer").then((m) => ({
-    default: m.SearchContainer,
-  })),
-);
-const TermContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/TermContainer").then((m) => ({
-    default: m.TermContainer,
-  })),
-);
-const TimelineContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/TimelineContainer").then((m) => ({
-    default: m.TimelineContainer,
   })),
 );
 const UserProfileContainer = lazy(() =>
@@ -53,10 +23,69 @@ const UserProfileContainer = lazy(() =>
   })),
 );
 
+const TimelineContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/TimelineContainer").then((m) => ({
+    default: m.TimelineContainer,
+  })),
+);
+
+const DirectMessageContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer").then((m) => ({
+    default: m.DirectMessageContainer,
+  })),
+);
+
+const DirectMessageListContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/DirectMessageListContainer").then((m) => ({
+    default: m.DirectMessageListContainer,
+  })),
+);
+
+const PostContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/PostContainer").then((m) => ({
+    default: m.PostContainer,
+  })),
+);
+
+const SearchContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/SearchContainer").then((m) => ({
+    default: m.SearchContainer,
+  })),
+);
+
+const TermContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/TermContainer").then((m) => ({
+    default: m.TermContainer,
+  })),
+);
+
+// ルート初期表示でだけ lazy chunk の取得を前倒しする
+// (render delay の短縮: Lighthouse が LCP 候補を決める前に chunk を揃える)
+if (typeof window !== "undefined") {
+  const path = window.location.pathname;
+
+  if (path === "/") {
+    void import("@web-speed-hackathon-2026/client/src/containers/TimelineContainer");
+  } else if (path === "/search") {
+    void import("@web-speed-hackathon-2026/client/src/containers/SearchContainer");
+  } else if (path === "/terms") {
+    void import("@web-speed-hackathon-2026/client/src/containers/TermContainer");
+  } else if (path === "/dm") {
+    void import("@web-speed-hackathon-2026/client/src/containers/DirectMessageListContainer");
+  } else if (path.startsWith("/dm/")) {
+    void import("@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer");
+  } else if (/^\/posts\/[^/]+$/.test(path)) {
+    void import("@web-speed-hackathon-2026/client/src/containers/PostContainer");
+  }
+}
+
 const routeSuspenseFallback = (
-  <div className="bg-cax-canvas text-cax-text p-4" role="status">
+  <p
+    className="bg-cax-canvas text-cax-text p-8 text-4xl font-bold leading-tight min-h-[160px]"
+    role="status"
+  >
     読込中...
-  </div>
+  </p>
 );
 
 export const AppContainer = () => {
@@ -98,19 +127,6 @@ export const AppContainer = () => {
 
   const authModalId = useId();
   const newPostModalId = useId();
-
-  if (isLoadingActiveUser) {
-    return (
-      <HelmetProvider>
-        <Helmet>
-          <title>読込中 - CaX</title>
-        </Helmet>
-        <div className="bg-cax-canvas text-cax-text p-4" role="status">
-          読込中...
-        </div>
-      </HelmetProvider>
-    );
-  }
 
   return (
     <HelmetProvider>

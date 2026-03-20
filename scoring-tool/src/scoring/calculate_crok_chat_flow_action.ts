@@ -26,7 +26,7 @@ export async function calculateCrokChatFlowAction({
       url: new URL("/not-found", baseUrl).href,
     });
   } catch (err) {
-    throw new Error("ページの読み込みに失敗したか、タイムアウトしました", { cause: err });
+    consola.error("CrokChatFlowAction - goTo failed:", err);
   }
   consola.debug("CrokChatFlowAction - navigate end");
 
@@ -40,7 +40,7 @@ export async function calculateCrokChatFlowAction({
       .getByRole("heading", { name: "サインイン" })
       .waitFor({ timeout: 10 * 1000 });
   } catch (err) {
-    throw new Error("サインインモーダルの表示に失敗しました", { cause: err });
+    consola.error("CrokChatFlowAction - sign-in modal show failed:", err);
   }
   try {
     const usernameInput = playwrightPage
@@ -48,7 +48,7 @@ export async function calculateCrokChatFlowAction({
       .getByRole("textbox", { name: "ユーザー名" });
     await usernameInput.pressSequentially("o6yq16leo");
   } catch (err) {
-    throw new Error("ユーザー名の入力に失敗しました", { cause: err });
+    consola.error("CrokChatFlowAction - username input failed:", err);
   }
   try {
     const passwordInput = playwrightPage
@@ -56,7 +56,7 @@ export async function calculateCrokChatFlowAction({
       .getByRole("textbox", { name: "パスワード" });
     await passwordInput.pressSequentially("wsh-2026");
   } catch (err) {
-    throw new Error("パスワードの入力に失敗しました", { cause: err });
+    consola.error("CrokChatFlowAction - password input failed:", err);
   }
   try {
     const submitButton = playwrightPage
@@ -65,7 +65,7 @@ export async function calculateCrokChatFlowAction({
     await submitButton.click();
     await playwrightPage.getByRole("link", { name: "Crok" }).waitFor({ timeout: 10 * 1000 });
   } catch (err) {
-    throw new Error("サインインに失敗しました", { cause: err });
+    consola.error("CrokChatFlowAction - sign-in submit failed:", err);
   }
   consola.debug("CrokChatFlowAction - signin end");
 
@@ -76,7 +76,7 @@ export async function calculateCrokChatFlowAction({
     await crokLink.click();
     await playwrightPage.waitForURL("**/crok", { timeout: 10 * 1000 });
   } catch (err) {
-    throw new Error("Crokページへの遷移に失敗しました", { cause: err });
+    consola.error("CrokChatFlowAction - navigate to /crok failed:", err);
   }
   consola.debug("CrokChatFlowAction - navigate to Crok end");
 

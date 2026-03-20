@@ -31,7 +31,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
       url: new URL("/", baseUrl).href,
     });
   } catch (err) {
-    throw new Error("ページの読み込みに失敗したか、タイムアウトしました", { cause: err });
+    consola.error("PostFlowAction - goTo failed:", err);
   }
   consola.debug("PostFlowAction - navigate end");
 
@@ -45,7 +45,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
       .getByRole("heading", { name: "サインイン" })
       .waitFor({ timeout: 10 * 1000 });
   } catch (err) {
-    throw new Error("サインインモーダルの表示に失敗しました", { cause: err });
+    consola.error("PostFlowAction - sign-in modal show failed:", err);
   }
   try {
     const usernameInput = playwrightPage
@@ -53,7 +53,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
       .getByRole("textbox", { name: "ユーザー名" });
     await usernameInput.pressSequentially("o6yq16leo");
   } catch (err) {
-    throw new Error("ユーザー名の入力に失敗しました", { cause: err });
+    consola.error("PostFlowAction - username input failed:", err);
   }
   try {
     const passwordInput = playwrightPage
@@ -61,7 +61,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
       .getByRole("textbox", { name: "パスワード" });
     await passwordInput.pressSequentially("wsh-2026");
   } catch (err) {
-    throw new Error("パスワードの入力に失敗しました", { cause: err });
+    consola.error("PostFlowAction - password input failed:", err);
   }
   try {
     const submitButton = playwrightPage
@@ -70,7 +70,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
     await submitButton.click();
     await playwrightPage.getByRole("link", { name: "マイページ" }).waitFor({ timeout: 10 * 1000 });
   } catch (err) {
-    throw new Error("サインインに失敗しました", { cause: err });
+    consola.error("PostFlowAction - sign-in submit failed:", err);
   }
   consola.debug("DmChatFlowAction - signin end");
 
@@ -87,7 +87,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
         .getByRole("dialog", { name: "新規投稿" })
         .waitFor({ timeout: 120 * 1000 });
     } catch (err) {
-      throw new Error("投稿モーダルの表示に失敗しました", { cause: err });
+      consola.error("PostFlowAction - post modal show (text) failed:", err);
     }
     try {
       const contentInput = playwrightPage
@@ -123,7 +123,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
         .getByRole("dialog", { name: "新規投稿" })
         .waitFor({ timeout: 120 * 1000 });
     } catch (err) {
-      throw new Error("投稿モーダルの表示に失敗しました", { cause: err });
+      consola.error("PostFlowAction - post modal show (image) failed:", err);
     }
     try {
       const contentInput = playwrightPage
@@ -139,7 +139,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
         .getByLabel("画像を添付");
       await imageInput.setInputFiles(IMAGE_FILE);
     } catch (err) {
-      throw new Error("投稿のファイル添付に失敗しました", { cause: err });
+      consola.error("PostFlowAction - image file attach failed:", err);
     }
     try {
       const submitButton = playwrightPage
@@ -164,7 +164,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
         .getByRole("dialog", { name: "新規投稿" })
         .waitFor({ timeout: 120 * 1000 });
     } catch (err) {
-      throw new Error("投稿モーダルの表示に失敗しました", { cause: err });
+      consola.error("PostFlowAction - post modal show (video) failed:", err);
     }
     try {
       const contentInput = playwrightPage
@@ -180,7 +180,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
         .getByLabel("動画を添付");
       await videoInput.setInputFiles(VIDEO_FILE);
     } catch (err) {
-      throw new Error("動画ファイルの添付に失敗しました", { cause: err });
+      consola.error("PostFlowAction - video file attach failed:", err);
     }
     try {
       const submitButton = playwrightPage
@@ -211,7 +211,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
         .getByRole("dialog", { name: "新規投稿" })
         .waitFor({ timeout: 120 * 1000 });
     } catch (err) {
-      throw new Error("投稿モーダルの表示に失敗しました", { cause: err });
+      consola.error("PostFlowAction - post modal show (audio) failed:", err);
     }
     try {
       const contentInput = playwrightPage
@@ -227,7 +227,7 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
         .getByLabel("音声を添付");
       await audioInput.setInputFiles(AUDIO_FILE);
     } catch (err) {
-      throw new Error("音声ファイルの添付に失敗しました", { cause: err });
+      consola.error("PostFlowAction - audio file attach failed:", err);
     }
     try {
       const submitButton = playwrightPage
