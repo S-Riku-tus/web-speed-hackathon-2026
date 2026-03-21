@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router";
 
+import { RouteLoadingSkeleton } from "@web-speed-hackathon-2026/client/src/components/application/RouteLoadingSkeleton";
 import { InfiniteScroll } from "@web-speed-hackathon-2026/client/src/components/foundation/InfiniteScroll";
 import { PostPage } from "@web-speed-hackathon-2026/client/src/components/post/PostPage";
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
@@ -21,9 +22,12 @@ const PostContainerContent = ({ postId }: { postId: string | undefined }) => {
 
   if (isLoadingPost) {
     return (
-      <Helmet>
-        <title>読込中 - CaX</title>
-      </Helmet>
+      <>
+        <Helmet>
+          <title>読込中 - CaX</title>
+        </Helmet>
+        <RouteLoadingSkeleton />
+      </>
     );
   }
 

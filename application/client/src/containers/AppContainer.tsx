@@ -3,15 +3,11 @@ import { HelmetProvider } from "react-helmet";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
+import { RouteLoadingSkeleton } from "@web-speed-hackathon-2026/client/src/components/application/RouteLoadingSkeleton";
 import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
 import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer";
+import { TimelineContainer } from "@web-speed-hackathon-2026/client/src/containers/TimelineContainer";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
-
-const TimelineContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/TimelineContainer").then((m) => ({
-    default: m.TimelineContainer,
-  })),
-);
 
 const CrokContainer = lazy(() =>
   import("@web-speed-hackathon-2026/client/src/containers/CrokContainer").then((m) => ({
@@ -64,9 +60,7 @@ const TermContainer = lazy(() =>
 if (typeof window !== "undefined") {
   const path = window.location.pathname;
 
-  if (path === "/") {
-    void import("@web-speed-hackathon-2026/client/src/containers/TimelineContainer");
-  } else if (path === "/search") {
+  if (path === "/search") {
     void import("@web-speed-hackathon-2026/client/src/containers/SearchContainer");
   } else if (path === "/terms") {
     void import("@web-speed-hackathon-2026/client/src/containers/TermContainer");
@@ -79,14 +73,7 @@ if (typeof window !== "undefined") {
   }
 }
 
-const routeSuspenseFallback = (
-  <p
-    className="bg-cax-canvas text-cax-text p-8 text-4xl font-bold leading-tight min-h-[160px]"
-    role="status"
-  >
-    読込中...
-  </p>
-);
+const routeSuspenseFallback = <RouteLoadingSkeleton />;
 
 export const AppContainer = () => {
   const { pathname } = useLocation();
