@@ -15,14 +15,13 @@ interface SubmitParams {
 }
 
 interface Props {
-  id: string;
   hasError: boolean;
   isLoading: boolean;
   onResetError: () => void;
   onSubmit: (params: SubmitParams) => void;
 }
 
-export const NewPostModalPage = ({ id, hasError, isLoading, onResetError, onSubmit }: Props) => {
+export const NewPostModalPage = ({ hasError, isLoading, onResetError, onSubmit }: Props) => {
   const [params, setParams] = useState<SubmitParams>({
     images: [],
     movie: undefined,
@@ -135,11 +134,10 @@ export const NewPostModalPage = ({ id, hasError, isLoading, onResetError, onSubm
 
   return (
     <form className="grid gap-y-6" onSubmit={handleSubmit}>
-      <h2 id={id} className="text-center text-2xl font-bold">
-        新規投稿
-      </h2>
+      <h2 className="text-center text-2xl font-bold">新規投稿</h2>
 
       <textarea
+        aria-label="いまなにしてる？"
         className="border-cax-border placeholder-cax-text-subtle focus:outline-cax-brand w-full resize-none rounded-xl border px-3 py-2 focus:outline-2 focus:outline-offset-2"
         rows={4}
         onChange={handleChangeText}

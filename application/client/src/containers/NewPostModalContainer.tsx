@@ -85,6 +85,10 @@ export const NewPostModalContainer = ({ id }: Props) => {
 
   return (
     <Modal aria-labelledby={dialogId} id={id} ref={ref} closedby="any">
+      {/* lazy 本体より前に常に存在させ、計測・支援技術でダイアログ名が解決されるようにする */}
+      <h2 id={dialogId} className="sr-only">
+        新規投稿
+      </h2>
       {shouldLoadModalPage ? (
         <Suspense
           fallback={
@@ -95,7 +99,6 @@ export const NewPostModalContainer = ({ id }: Props) => {
         >
           <NewPostModalPage
             key={resetKey}
-            id={dialogId}
             hasError={hasError}
             isLoading={isLoading}
             onResetError={handleResetError}

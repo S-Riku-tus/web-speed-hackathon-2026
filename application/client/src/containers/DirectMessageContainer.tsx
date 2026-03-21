@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router";
 
@@ -44,11 +44,15 @@ export const DirectMessageContainer = ({ activeUser, authModalId }: Props) => {
       const data = await fetchJSON<Models.DirectMessageConversation>(
         `/api/v1/dm/${conversationId}`,
       );
-      setConversation(data);
-      setConversationError(null);
+      startTransition(() => {
+        setConversation(data);
+        setConversationError(null);
+      });
     } catch (error) {
-      setConversation(null);
-      setConversationError(error as Error);
+      startTransition(() => {
+        setConversation(null);
+        setConversationError(error as Error);
+      });
     }
   }, [activeUser, conversationId]);
 

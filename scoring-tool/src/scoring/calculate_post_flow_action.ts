@@ -1,7 +1,4 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
-import * as playwright from "playwright";
+import type * as playwright from "playwright";
 import type * as puppeteer from "puppeteer";
 
 import { consola } from "../consola";
@@ -9,12 +6,6 @@ import { goTo } from "../utils/go_to";
 import { startFlow } from "../utils/start_flow";
 
 import { calculateHackathonScore } from "./utils/calculate_hackathon_score";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const WORKSPACE_ROOT = path.resolve(__dirname, "../../..");
-const IMAGE_FILE = path.join(WORKSPACE_ROOT, "docs/assets/analoguma.tiff");
-const AUDIO_FILE = path.join(WORKSPACE_ROOT, "docs/assets/maoudamashii_shining_star.wav");
-const VIDEO_FILE = path.join(WORKSPACE_ROOT, "docs/assets/pixabay_326739_kanenori_himejijo.mkv");
 
 type Params = {
   baseUrl: string;
@@ -116,7 +107,9 @@ export async function calculatePostFlowAction({ baseUrl, playwrightPage, puppete
         .getByRole("button", { name: "投稿する" });
       await submitButton.click();
 
-      await playwrightPage.getByRole("article").getByText(textToPost).waitFor({ timeout: 60 * 1000 });
+      // 成功時は投稿詳細へ遷移するため、タイムラインの article 待ちではタイムアウトしうる
+      await playwrightPage.waitForURL("**/posts/*", { timeout: 60 * 1000 });
+      await playwrightPage.getByText(textToPost).waitFor({ timeout: 30 * 1000 });
     } catch (err) {
       consola.error("PostFlowAction - text post failed:", err);
     }

@@ -13,6 +13,12 @@ type Params = {
   puppeteerPage: puppeteer.Page;
 };
 
+async function signOutViaAccountMenu(playwrightPage: playwright.Page) {
+  await playwrightPage.getByRole("button", { name: "アカウントメニュー" }).click();
+  await playwrightPage.getByRole("button", { name: "サインアウト" }).click();
+  await playwrightPage.getByRole("button", { name: "サインイン" }).waitFor({ state: "visible", timeout: 15 * 1000 });
+}
+
 export async function calculateDmChatFlowAction({
   baseUrl,
   playwrightPage,
@@ -41,11 +47,14 @@ export async function calculateDmChatFlowAction({
   const peerName = `wsh_dm_peer_${uniqueSuffix}`;
   const password = "superultra_hyper_miracle_romantic";
 
-  // 既存アカウントが存在しないと失敗しやすいので、毎回ユニークなユーザーを作成してログインする
-  for (const [username, name] of [
+  // 既存アカウントが存在しないと失敗しやすいので、毎回ユニークなユーザーを作成する。
+  // 1人目登録後はログイン済みのため サインイン が出ず 2人目が作れない → 必ずサインアウトする。
+  const registrations = [
     [peerUsername, peerName],
     [meUsername, meName],
-  ] as const) {
+  ] as const;
+  for (let ri = 0; ri < registrations.length; ri++) {
+    const [username, name] = registrations[ri]!;
     try {
       const signinButton = playwrightPage.getByRole("button", { name: "サインイン" });
       await signinButton.click();
@@ -81,6 +90,10 @@ export async function calculateDmChatFlowAction({
       const registerButton = playwrightPage.getByRole("dialog").getByRole("button", { name: "登録する" });
       await registerButton.click();
       await playwrightPage.getByRole("link", { name: "マイページ" }).waitFor({ timeout: 10 * 1000 });
+
+      if (ri === 0) {
+        await signOutViaAccountMenu(playwrightPage);
+      }
     } catch (err) {
       consola.error("DmChatFlowAction - signup failed (will continue):", err);
     }
