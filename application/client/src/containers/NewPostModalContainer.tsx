@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
 import { sendFile, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
+import { observeDialogOpen } from "@web-speed-hackathon-2026/client/src/utils/observe_dialog_open";
 
 const NewPostModalPage = lazy(() =>
   import("@web-speed-hackathon-2026/client/src/components/new_post_modal/NewPostModalPage").then(
@@ -39,23 +40,20 @@ export const NewPostModalContainer = ({ id }: Props) => {
   const ref = useRef<HTMLDialogElement>(null);
   const [resetKey, setResetKey] = useState(0);
   const [shouldLoadModalPage, setShouldLoadModalPage] = useState(false);
+
   useEffect(() => {
     const element = ref.current;
     if (element == null) {
       return;
     }
 
-    const handleToggle = () => {
-      if (element.open) {
+    return observeDialogOpen(element, (isOpen) => {
+      if (isOpen) {
         setShouldLoadModalPage(true);
+      } else {
+        setResetKey((key) => key + 1);
       }
-      // モーダル開閉時にkeyを更新することでフォームの状態をリセットする
-      setResetKey((key) => key + 1);
-    };
-    element.addEventListener("toggle", handleToggle);
-    return () => {
-      element.removeEventListener("toggle", handleToggle);
-    };
+    });
   }, []);
 
   const navigate = useNavigate();
@@ -85,7 +83,6 @@ export const NewPostModalContainer = ({ id }: Props) => {
 
   return (
     <Modal aria-labelledby={dialogId} id={id} ref={ref} closedby="any">
-      {/* lazy 本体より前に常に存在させ、計測・支援技術でダイアログ名が解決されるようにする */}
       <h2 id={dialogId} className="sr-only">
         新規投稿
       </h2>

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { SubmissionError } from "redux-form";
 
 import { AuthFormData } from "@web-speed-hackathon-2026/client/src/auth/types";
 import { AuthModalPage } from "@web-speed-hackathon-2026/client/src/components/auth_modal/AuthModalPage";
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
 import { sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
+import { observeDialogOpen } from "@web-speed-hackathon-2026/client/src/utils/observe_dialog_open";
 
 interface Props {
   id: string;
@@ -43,34 +45,35 @@ function getErrorCode(err: HttpError, type: "signin" | "signup"): string {
 export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
   const ref = useRef<HTMLDialogElement>(null);
   const [resetKey, setResetKey] = useState(0);
-  useEffect(() => {
-    if (!ref.current) return;
-    const element = ref.current;
 
-    const handleToggle = () => {
-      // モーダル開閉時にkeyを更新することでフォームの状態をリセットする
-      setResetKey((key) => key + 1);
-    };
-    element.addEventListener("toggle", handleToggle);
-    return () => {
-      element.removeEventListener("toggle", handleToggle);
-    };
-  }, [ref, setResetKey]);
+  useEffect(() => {
+    const element = ref.current;
+    if (element == null) {
+      return;
+    }
+
+    return observeDialogOpen(element, (isOpen) => {
+      if (!isOpen) {
+        setResetKey((key) => key + 1);
+      }
+    });
+  }, []);
 
   const handleRequestCloseModal = useCallback(() => {
     ref.current?.close();
-  }, [ref]);
+  }, []);
 
   const handleSubmit = useCallback(
     async (values: AuthFormData) => {
       try {
-        if (values.type === "signup") {
-          const user = await sendJSON<Models.User>("/api/v1/signup", values);
+        const user =
+          values.type === "signup"
+            ? await sendJSON<Models.User>("/api/v1/signup", values)
+            : await sendJSON<Models.User>("/api/v1/signin", values);
+
+        flushSync(() => {
           onUpdateActiveUser(user);
-        } else {
-          const user = await sendJSON<Models.User>("/api/v1/signin", values);
-          onUpdateActiveUser(user);
-        }
+        });
         handleRequestCloseModal();
       } catch (err: unknown) {
         const error = getErrorCode(err as HttpError, values.type);

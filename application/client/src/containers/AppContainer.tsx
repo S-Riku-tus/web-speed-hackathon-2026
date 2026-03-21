@@ -77,6 +77,21 @@ export const AppContainer = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
+  // サーバーからプリロードされた /api/v1/me データがあれば初期状態に反映する
+  const _preloadedMe = (() => {
+    const p = typeof window !== "undefined"
+      ? (window as unknown as Record<string, unknown>).__PRELOAD_DATA__
+      : null;
+    return p && typeof p === "object" && "/api/v1/me" in (p as Record<string, unknown>)
+      ? { found: true, value: (p as Record<string, unknown>)["/api/v1/me"] as Models.User | null }
+      : { found: false, value: null };
+  })();
+
+  const [activeUser, setActiveUser] = useState<Models.User | null>(
+    _preloadedMe.found ? _preloadedMe.value : null,
+  );
+  const [, setIsLoadingActiveUser] = useState(!_preloadedMe.found);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
@@ -110,19 +125,6 @@ export const AppContainer = () => {
       }
     };
   }, [activeUser]);
-
-  // サーバーからプリロードされた /api/v1/me データがあれば初期状態に反映する
-  const _preloadedMe = (() => {
-    const p = typeof window !== "undefined"
-      ? (window as unknown as Record<string, unknown>).__PRELOAD_DATA__
-      : null;
-    return p && typeof p === "object" && "/api/v1/me" in (p as Record<string, unknown>)
-      ? { found: true, value: (p as Record<string, unknown>)["/api/v1/me"] as Models.User | null }
-      : { found: false, value: null };
-  })();
-
-  const [activeUser, setActiveUser] = useState<Models.User | null>(_preloadedMe.found ? _preloadedMe.value : null);
-  const [isLoadingActiveUser, setIsLoadingActiveUser] = useState(!_preloadedMe.found);
 
   useEffect(() => {
     if (_preloadedMe.found) return; // プリロード済みならスキップ
