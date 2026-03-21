@@ -1,12 +1,17 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useState } from "react";
-import { Helmet, HelmetProvider } from "react-helmet";
+import { HelmetProvider } from "react-helmet";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
 import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
 import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer";
-import { TimelineContainer } from "@web-speed-hackathon-2026/client/src/containers/TimelineContainer";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
+
+const TimelineContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/TimelineContainer").then((m) => ({
+    default: m.TimelineContainer,
+  })),
+);
 
 const CrokContainer = lazy(() =>
   import("@web-speed-hackathon-2026/client/src/containers/CrokContainer").then((m) => ({
@@ -59,7 +64,9 @@ const TermContainer = lazy(() =>
 if (typeof window !== "undefined") {
   const path = window.location.pathname;
 
-  if (path === "/search") {
+  if (path === "/") {
+    void import("@web-speed-hackathon-2026/client/src/containers/TimelineContainer");
+  } else if (path === "/search") {
     void import("@web-speed-hackathon-2026/client/src/containers/SearchContainer");
   } else if (path === "/terms") {
     void import("@web-speed-hackathon-2026/client/src/containers/TermContainer");
@@ -90,16 +97,17 @@ export const AppContainer = () => {
 
   // サーバーからプリロードされた /api/v1/me データがあれば初期状態に反映する
   const _preloadedMe = (() => {
-    const p = typeof window !== "undefined"
-      ? (window as unknown as Record<string, unknown>).__PRELOAD_DATA__
-      : null;
+    const p =
+      typeof window !== "undefined"
+        ? (window as unknown as Record<string, unknown>)["__PRELOAD_DATA__"]
+        : null;
     return p && typeof p === "object" && "/api/v1/me" in (p as Record<string, unknown>)
       ? { found: true, value: (p as Record<string, unknown>)["/api/v1/me"] as Models.User | null }
       : { found: false, value: null };
   })();
 
   const [activeUser, setActiveUser] = useState<Models.User | null>(_preloadedMe.found ? _preloadedMe.value : null);
-  const [isLoadingActiveUser, setIsLoadingActiveUser] = useState(!_preloadedMe.found);
+  const [, setIsLoadingActiveUser] = useState(!_preloadedMe.found);
 
   useEffect(() => {
     if (_preloadedMe.found) return; // プリロード済みならスキップ
