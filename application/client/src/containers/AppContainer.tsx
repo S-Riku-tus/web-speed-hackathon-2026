@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useState } from "react";
-import { Helmet, HelmetProvider } from "react-helmet";
+import { HelmetProvider } from "react-helmet";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
@@ -76,6 +76,7 @@ const routeSuspenseFallback = (
 export const AppContainer = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
